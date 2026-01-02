@@ -68,21 +68,15 @@ export default function Particles({
                 const y = e.touches[0].clientY - rect.top;
                 mouse.current.x = x;
                 mouse.current.y = y;
-                // Prevent scrolling while interacting with particles
-                // Note: This effectively disables scrolling on mobile while touching the screen.
-                // If this is too aggressive, we might restrict it to specific conditions.
-                if (e.cancelable) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
+                // Don't prevent default - allow scrolling
+            }, { passive: true });
             window.addEventListener("touchstart", (e) => {
                 const rect = canvasRef.current!.getBoundingClientRect();
                 const x = e.touches[0].clientX - rect.left;
                 const y = e.touches[0].clientY - rect.top;
                 mouse.current.x = x;
                 mouse.current.y = y;
-                // Optional: prevent default here too if needed, but touchmove is key for scrolling
-            });
+            }, { passive: true });
         }
     };
 
