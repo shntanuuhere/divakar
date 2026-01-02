@@ -23,6 +23,7 @@ export default function Particles({
     const context = useRef<CanvasRenderingContext2D | null>(null);
     const circles = useRef<any[]>([]);
     const mouse = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+    const tilt = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
     const canvasSize = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
     const dpr = typeof window !== "undefined" ? window.devicePixelRatio : 1;
     const { theme } = useTheme();
@@ -41,7 +42,7 @@ export default function Particles({
     }, [theme]);
 
     useEffect(() => {
-        onMouseMove();
+        setupInteractions();
     }, []);
 
     useEffect(() => {
@@ -53,31 +54,56 @@ export default function Particles({
         drawParticles();
     };
 
-    const onMouseMove = () => {
-        if (canvasRef.current) {
-            window.addEventListener("mousemove", (e) => {
-                const rect = canvasRef.current!.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                mouse.current.x = x;
-                mouse.current.y = y;
-            });
-            window.addEventListener("touchmove", (e) => {
-                const rect = canvasRef.current!.getBoundingClientRect();
-                const x = e.touches[0].clientX - rect.left;
-                const y = e.touches[0].clientY - rect.top;
-                mouse.current.x = x;
-                mouse.current.y = y;
-                // Don't prevent default - allow scrolling
-            }, { passive: true });
-            window.addEventListener("touchstart", (e) => {
-                const rect = canvasRef.current!.getBoundingClientRect();
-                const x = e.touches[0].clientX - rect.left;
-                const y = e.touches[0].clientY - rect.top;
-                mouse.current.x = x;
-                mouse.current.y = y;
-            }, { passive: true });
+    const setupInteractions = () => {
+        if (!canvasRef.current) return;
+
+        // Desktop mouse movement
+        window.addEventListener("mousemove", (e) => {
+            const rect = canvasRef.current!.getBoundingClientRect();
+            mouse.current.x = e.clientX - rect.left;
+            mouse.current.y = e.clientY - rect.top;
+        });
+
+        // Mobile gyroscope/accelerometer
+        if (typeof DeviceOrientationEvent !== 'undefined') {
+            const handleOrientation = (e: DeviceOrientationEvent) => {
+                if (e.gamma !== null && e.beta !== null) {
+                    // gamma: left-right tilt (-90 to 90)
+                    // beta: front-back tilt (-180 to 180)
+                    const tiltX = (e.gamma / 45) * (canvasSize.current.w / 2) + canvasSize.current.w / 2;
+                    const tiltY = ((e.beta - 45) / 45) * (canvasSize.current.h / 2) + canvasSize.current.h / 2;
+                    
+                    // Smooth the tilt values
+                    tilt.current.x += (tiltX - tilt.current.x) * 0.1;
+                    tilt.current.y += (tiltY - tilt.current.y) * 0.1;
+                    
+                    mouse.current.x = tilt.current.x;
+                    mouse.current.y = tilt.current.y;
+                }
+            };
+
+            // iOS 13+ requires permission
+            const requestPermission = (DeviceOrientationEvent as any).requestPermission;
+            if (typeof requestPermission === 'function') {
+                const requestOrientationPermission = async () => {
+                    try {
+                        const permission = await requestPermission();
+                        if (permission === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                        }
+                    } catch (err) {
+                        console.log('Orientation permission denied');
+                    }
+                };
+                window.addEventListener('touchstart', requestOrientationPermission, { once: true });
+            } else {
+                window.addEventListener('deviceorientation', handleOrientation);
+            }
         }
+
+        // Initialize tilt to center
+        tilt.current.x = canvasSize.current.w / 2;
+        tilt.current.y = canvasSize.current.h / 2;
     };
 
     const resizeCanvas = () => {

@@ -40,7 +40,7 @@ body {
 body {
     color: var(--foreground);
     background: var(--background);
-    font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--font-jakarta), var(--font-inter), -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     line-height: 1.6;
@@ -48,6 +48,7 @@ body {
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
 /* Layout Utilities */
@@ -69,9 +70,10 @@ body {
 }
 
 .logo {
-    font-weight: 800;
+    font-family: var(--font-jakarta), var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 700;
     font-size: 1.5rem;
-    letter-spacing: -0.05em;
+    letter-spacing: -0.03em;
     position: relative;
     z-index: 10;
 }
@@ -126,10 +128,11 @@ body {
 }
 
 .title {
+    font-family: var(--font-jakarta), var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 3.5rem;
     line-height: 1.1;
-    font-weight: 800;
-    letter-spacing: -0.03em;
+    font-weight: 700;
+    letter-spacing: -0.025em;
     margin-bottom: 0.5rem;
 }
 
@@ -140,19 +143,21 @@ body {
 }
 
 .subtitle {
-    font-size: 0.875rem;
-    letter-spacing: 0.2em;
+    font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
     color: var(--muted-foreground);
-    font-weight: 600;
+    font-weight: 500;
     text-transform: uppercase;
 }
 
 .bio {
     max-width: 600px;
-    font-size: 1.125rem;
+    font-size: 1.0625rem;
     color: var(--foreground);
-    opacity: 0.9;
-    line-height: 1.7;
+    opacity: 0.85;
+    line-height: 1.65;
+    font-weight: 400;
 }
 
 /* Button & Interactive Elements */
