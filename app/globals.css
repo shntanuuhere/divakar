@@ -33,7 +33,7 @@
 
 html,
 body {
-    height: 100%;
+    min-height: 100%;
     transition: background-color 0.5s cubic-bezier(0.32, 0.72, 0, 1), color 0.5s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -46,7 +46,8 @@ body {
     line-height: 1.6;
     width: 100%;
     overflow-x: hidden;
-    overscroll-behavior-x: none;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Layout Utilities */
@@ -55,7 +56,7 @@ body {
     max-width: 1024px;
     margin: 0 auto;
     padding: 0 1.5rem;
-    min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
 }
