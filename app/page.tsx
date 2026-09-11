@@ -118,7 +118,7 @@ export default function Home() {
         className="fixed top-0 left-0 right-0 h-1 bg-[var(--foreground)] z-50 origin-left"
       />
 
-      <header className="header" style={{ position: 'relative', zIndex: 100, display: 'flex', alignItems: 'center' }}>
+      <header className="header" style={{ position: 'relative', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px' }}>
           <Magnetic>
             <motion.div
@@ -175,7 +175,7 @@ export default function Home() {
               }}
             >
               <Image
-                src="https://d316u7k0d46mo4.cloudfront.net/user-layh4cigqbmfyoxk794vhkncv7c2/avatar-1763810148662.webp"
+                src="https://media.hereco.in/assets/jhuip098765hskadihrco088"
                 alt="Diwakar Nayyer"
                 fill
                 sizes="(max-width: 768px) 180px, 180px"
@@ -243,7 +243,7 @@ export default function Home() {
 
       <footer className="flex flex-col items-center gap-3 text-center py-8 text-xs text-[var(--muted-foreground)] border-t border-[var(--border)] mt-auto w-full font-sans antialiased tracking-wide">
         <p className="opacity-80">&copy; {new Date().getFullYear()} Diwakar Nayyer. All rights reserved.</p>
-        <p className="opacity-80">Built with ❤️ by <a href="https://hereco.xyz" target="_blank" rel="noopener noreferrer" className="!no-underline text-inherit hover:text-[var(--foreground)] active:text-[var(--primary)] transition-colors duration-200" style={{ textDecoration: 'none' }}>Shantanu Sen Gupta</a></p>
+        <p className="opacity-80">Built with ❤️ by <a href="https://hereco.in" target="_blank" rel="noopener noreferrer" className="!no-underline text-inherit hover:text-[var(--foreground)] active:text-[var(--primary)] transition-colors duration-200" style={{ textDecoration: 'none' }}>Shantanu Sen Gupta</a></p>
       </footer>
     </div>
   );

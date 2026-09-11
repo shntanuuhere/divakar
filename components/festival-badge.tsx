@@ -26,7 +26,7 @@ export function FestivalBadge() {
     if (!data?.active || !data.festival) return null;
 
     const lottieUrl = data.festival.lottieUrl.replace(
-        'https://d316u7k0d46mo4.cloudfront.net/festival-badges',
+        'https://media.hereco.in/festival-badges',
         '/api/proxy/lottie'
     );
 

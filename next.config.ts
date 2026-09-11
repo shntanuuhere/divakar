@@ -5,11 +5,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'd316u7k0d46mo4.cloudfront.net',
+        hostname: 'media.hereco.in',
       },
       {
         protocol: 'https',
-        hostname: 'www.hereco.xyz',
+        hostname: 'www.hereco.in',
       },
     ],
   },
@@ -17,11 +17,11 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/proxy/festival',
-        destination: 'https://www.hereco.xyz/api/festival',
+        destination: 'https://www.hereco.in/api/festival',
       },
       {
         source: '/api/proxy/lottie/:path*',
-        destination: 'https://d316u7k0d46mo4.cloudfront.net/festival-badges/:path*',
+        destination: 'https://media.hereco.in/festival-badges/:path*',
       },
     ];
   },

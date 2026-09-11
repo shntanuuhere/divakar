@@ -23,12 +23,17 @@ export default function Particles({
     const context = useRef<CanvasRenderingContext2D | null>(null);
     const circles = useRef<any[]>([]);
     const mouse = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-    const tilt = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
     const canvasSize = useRef<{ w: number; h: number }>({ w: 0, h: 0 });
     const dpr = typeof window !== "undefined" ? window.devicePixelRatio : 1;
     const { theme } = useTheme();
+    const rafID = useRef<number | null>(null);
+    const isMobile = useRef(false);
 
     useEffect(() => {
+        if (typeof window !== "undefined") {
+            isMobile.current = window.matchMedia("(max-width: 768px)").matches;
+        }
+
         if (canvasRef.current) {
             context.current = canvasRef.current.getContext("2d");
         }
@@ -37,6 +42,9 @@ export default function Particles({
         window.addEventListener("resize", initCanvas);
 
         return () => {
+            if (rafID.current) {
+                window.cancelAnimationFrame(rafID.current);
+            }
             window.removeEventListener("resize", initCanvas);
         };
     }, [theme]);
@@ -57,12 +65,23 @@ export default function Particles({
     const setupInteractions = () => {
         if (!canvasRef.current) return;
 
-        // Desktop mouse movement
-        window.addEventListener("mousemove", (e) => {
+        const updateMouse = (x: number, y: number) => {
             const rect = canvasRef.current!.getBoundingClientRect();
-            mouse.current.x = e.clientX - rect.left;
-            mouse.current.y = e.clientY - rect.top;
+            mouse.current.x = x - rect.left;
+            mouse.current.y = y - rect.top;
+        }
+
+        // Mouse movement
+        window.addEventListener("mousemove", (e) => {
+            updateMouse(e.clientX, e.clientY);
         });
+
+        // Touch movement
+        window.addEventListener("touchmove", (e) => {
+            if (e.touches.length > 0) {
+                updateMouse(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, { passive: true });
 
         // Mobile gyroscope/accelerometer
         if (typeof DeviceOrientationEvent !== 'undefined') {
@@ -72,38 +91,16 @@ export default function Particles({
                     // beta: front-back tilt (-180 to 180)
                     const tiltX = (e.gamma / 45) * (canvasSize.current.w / 2) + canvasSize.current.w / 2;
                     const tiltY = ((e.beta - 45) / 45) * (canvasSize.current.h / 2) + canvasSize.current.h / 2;
-                    
-                    // Smooth the tilt values
-                    tilt.current.x += (tiltX - tilt.current.x) * 0.1;
-                    tilt.current.y += (tiltY - tilt.current.y) * 0.1;
-                    
-                    mouse.current.x = tilt.current.x;
-                    mouse.current.y = tilt.current.y;
+
+                    // Only update if no recent touch interaction (simple check could be added, but overwriting is fine for now)
+                    mouse.current.x += (tiltX - mouse.current.x) * 0.1;
+                    mouse.current.y += (tiltY - mouse.current.y) * 0.1;
                 }
             };
-
-            // iOS 13+ requires permission
-            const requestPermission = (DeviceOrientationEvent as any).requestPermission;
-            if (typeof requestPermission === 'function') {
-                const requestOrientationPermission = async () => {
-                    try {
-                        const permission = await requestPermission();
-                        if (permission === 'granted') {
-                            window.addEventListener('deviceorientation', handleOrientation);
-                        }
-                    } catch (err) {
-                        console.log('Orientation permission denied');
-                    }
-                };
-                window.addEventListener('touchstart', requestOrientationPermission, { once: true });
-            } else {
-                window.addEventListener('deviceorientation', handleOrientation);
-            }
+            // iOS Permission logic remains if needed, but often requires user gesture interaction button to trigger
+            // For now, simpler listener:
+            window.addEventListener('deviceorientation', handleOrientation);
         }
-
-        // Initialize tilt to center
-        tilt.current.x = canvasSize.current.w / 2;
-        tilt.current.y = canvasSize.current.h / 2;
     };
 
     const resizeCanvas = () => {
@@ -122,19 +119,17 @@ export default function Particles({
     const circleParams = () => {
         const x = Math.floor(Math.random() * canvasSize.current.w);
         const y = Math.floor(Math.random() * canvasSize.current.h);
-        const translateX = 0;
-        const translateY = 0;
         const size = Math.floor(Math.random() * 2) + 0.1;
         const alpha = 0;
         const targetAlpha = parseFloat((Math.random() * 0.6 + 0.1).toFixed(1));
-        const dx = Math.random() * 0.5 + 0.2; // Simulating wind to the right
-        const dy = (Math.random() - 0.5) * 0.1; // Minimal vertical drift
+        const dx = Math.random() * 0.5 + 0.2;
+        const dy = (Math.random() - 0.5) * 0.1;
         const magnetism = 0.1 + Math.random() * 4;
         return {
             x,
             y,
-            translateX,
-            translateY,
+            translateX: 0,
+            translateY: 0,
             size,
             alpha,
             targetAlpha,
@@ -162,58 +157,65 @@ export default function Particles({
 
     const clearContext = () => {
         if (context.current) {
-            context.current.clearRect(
-                0,
-                0,
-                canvasSize.current.w,
-                canvasSize.current.h,
-            );
+            context.current.clearRect(0, 0, canvasSize.current.w, canvasSize.current.h);
         }
     };
 
     const drawParticles = () => {
         clearContext();
-        const particleCount = quantity;
+        const particleCount = isMobile.current ? Math.min(quantity, 400) : quantity; // Optimize count for mobile
         for (let i = 0; i < particleCount; i++) {
             const circle = circleParams();
             drawCircle(circle);
         }
     };
 
-    const remapValue = (
-        value: number,
-        start1: number,
-        end1: number,
-        start2: number,
-        end2: number,
-    ) => {
-        const remapped =
-            ((value - start1) * (end2 - start2)) / (end1 - start1) + start2;
-        return remapped > 0 ? remapped : 0;
-    };
-
     const animate = () => {
         clearContext();
-        circles.current.forEach((circle: any, i: number) => {
-            // Handle the alpha value
-            const edge = [
-                circle.x + circle.translateX - circle.size, // distance from left edge
-                canvasSize.current.w - circle.x - circle.translateX - circle.size, // distance from right edge
-                circle.y + circle.translateY - circle.size, // distance from top edge
-                canvasSize.current.h - circle.y - circle.translateY - circle.size, // distance from bottom edge
-            ];
-            const closestEdge = edge.reduce((a, b) => Math.min(a, b));
-            const remapClosestEdge = parseFloat(
-                remapValue(closestEdge, 0, 20, 0, 1).toFixed(2),
-            );
-            if (remapClosestEdge > 1) {
-                circle.alpha += 0.02;
-                if (circle.alpha > circle.targetAlpha) {
-                    circle.alpha = circle.targetAlpha;
+        const len = circles.current.length;
+        const width = canvasSize.current.w;
+        const height = canvasSize.current.h;
+
+        for (let i = 0; i < len; i++) {
+            const circle = circles.current[i];
+
+            // Optimization: Static math instead of edge array reduction and remapping
+            const x = circle.x + circle.translateX;
+            const y = circle.y + circle.translateY;
+
+            // Simple edge fade distance (20px) calculation without allocation
+            const distLeft = x - circle.size;
+            const distRight = width - x - circle.size;
+            const distTop = y - circle.size;
+            const distBottom = height - y - circle.size;
+
+            // Find min distance manually
+            let minEdge = distLeft;
+            if (distRight < minEdge) minEdge = distRight;
+            if (distTop < minEdge) minEdge = distTop;
+            if (distBottom < minEdge) minEdge = distBottom;
+
+            let alphaFactor = 1;
+
+            if (minEdge < 0) {
+                minEdge = 0; // clamp
+                alphaFactor = 0;
+            } else if (minEdge < 20) {
+                // Map 0..20 to 0..1
+                alphaFactor = minEdge / 20;
+            }
+
+            if (alphaFactor === 1) {
+                // Fade in
+                if (circle.alpha < circle.targetAlpha) {
+                    circle.alpha += 0.02;
+                    if (circle.alpha > circle.targetAlpha) circle.alpha = circle.targetAlpha;
                 }
             } else {
-                circle.alpha = circle.targetAlpha * remapClosestEdge;
+                // Fade out at edge
+                circle.alpha = circle.targetAlpha * alphaFactor;
             }
+
             circle.x += circle.dx;
             circle.y += circle.dy;
 
@@ -224,33 +226,24 @@ export default function Particles({
             circle.translateX += (targetTranslateX - circle.translateX) / ease;
             circle.translateY += (targetTranslateY - circle.translateY) / ease;
 
+            // Boundary check - recycle
             if (
                 circle.x < -circle.size ||
-                circle.x > canvasSize.current.w + circle.size ||
+                circle.x > width + circle.size ||
                 circle.y < -circle.size ||
-                circle.y > canvasSize.current.h + circle.size
+                circle.y > height + circle.size
             ) {
-                // circle is out of the canvas, reset to left side to create flow
-                circles.current.splice(i, 1);
-                const newCircle = circleParams();
-                newCircle.x = -newCircle.size; // start from left
-                newCircle.y = Math.floor(Math.random() * canvasSize.current.h);
-                drawCircle(newCircle);
-            } else {
-                drawCircle(
-                    {
-                        ...circle,
-                        x: circle.x,
-                        y: circle.y,
-                        translateX: circle.translateX,
-                        translateY: circle.translateY,
-                        alpha: circle.alpha,
-                    },
-                    true,
-                );
+                // Reset particle
+                circle.x = -circle.size;
+                circle.y = Math.random() * height;
+                circle.translateX = 0;
+                circle.translateY = 0;
+                circle.alpha = 0;
             }
-        });
-        window.requestAnimationFrame(animate);
+
+            drawCircle(circle, true);
+        }
+        rafID.current = window.requestAnimationFrame(animate);
     };
 
     return (
