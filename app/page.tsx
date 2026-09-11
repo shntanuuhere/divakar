@@ -174,14 +174,16 @@ export default function Home() {
                 transformStyle: "preserve-3d"
               }}
             >
-              <Image
+              <img
                 src="https://media.hereco.in/assets/jhuip098765hskadihrco088"
                 alt="Diwakar Nayyer"
-                fill
-                sizes="(max-width: 768px) 180px, 180px"
                 className="profile-placeholder"
-                style={{ objectFit: 'cover' }}
-                priority
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  display: 'block'
+                }}
               />
             </motion.div>
           </motion.div>
